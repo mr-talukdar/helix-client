@@ -251,6 +251,13 @@ The frontend interface is functional and the next step is integrating a persiste
 
 ---
 
+# Documentation
+
+- [System Design](docs/system_design.md)
+- [Multi-Agent AI Architecture](docs/multi_agent_architecture.md)
+
+---
+
 # License
 
 Private project – currently under development.
