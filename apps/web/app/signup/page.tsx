@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { SocialAuth } from '@/components/auth/social-auth'
+import { BrandLogo } from '@/components/layout/brand-logo'
 
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -82,12 +83,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center space-y-2 text-center">
-          <Link href="/" className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-primary/10 rounded-xl">
-              <Activity className="h-8 w-8 text-primary" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">HeliX</span>
-          </Link>
+          <BrandLogo imageSize={40} textSize="text-2xl" className="mb-4" />
           <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
           <p className="text-sm text-muted-foreground">
             Enter your details below to get started

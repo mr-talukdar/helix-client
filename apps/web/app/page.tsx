@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Activity, Trophy, Users } from 'lucide-react'
+import { BrandLogo } from '@/components/layout/brand-logo'
 
 export default function LandingPage() {
   return (
@@ -12,10 +13,7 @@ export default function LandingPage() {
       />
 
       <header className="px-4 lg:px-6 h-14 flex items-center border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <Link className="flex items-center justify-center gap-2" href="#">
-          <Activity className="h-6 w-6 text-primary" />
-          <span className="font-bold tracking-tight text-lg">HeliX</span>
-        </Link>
+        <BrandLogo imageSize={28} textSize="text-lg" />
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Link className="text-sm font-medium hover:text-primary underline-offset-4 hover:underline" href="/login">
             Login
@@ -87,10 +85,7 @@ export default function LandingPage() {
       
       <footer className="w-full border-t border-border/40 py-6 md:py-8 flex justify-center z-10">
         <div className="container flex flex-col md:flex-row items-center justify-between px-4 md:px-6 gap-4 text-center md:text-left">
-          <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            <span className="font-semibold">HeliX</span>
-          </div>
+          <BrandLogo imageSize={20} textSize="text-base font-semibold" />
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} HeliX Fitness. All rights reserved.
           </p>
