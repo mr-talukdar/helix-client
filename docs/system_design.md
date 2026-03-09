@@ -1,441 +1,263 @@
-# HeliX — System Design
+# HeliX — System Design & Architecture (MVP)
 
-A comprehensive system design for **HeliX**, a mobile-first workout tracking application evolving into an AI-powered gym copilot.
+A comprehensive system design for **HeliX**, focusing on the **Minimum Viable Product (MVP)**: a mobile-first workout tracker with a local gym ecosystem.
 
----
-
-## 1. Current State Assessment
-
-The current codebase is a **frontend-only Next.js app** with:
-
-| Layer | Current State | Gap |
-|-------|--------------|-----|
-| **Data** | `localStorage` with hardcoded mock data | No persistence, no multi-device sync |
-| **Auth** | None | No user identity |
-| **API** | None | No server communication |
-| **State** | Per-component `useState` + `useEffect` | No shared state management |
-| **Types** | Inline interfaces per component | No shared type system |
+> **MVP Scope:** Workout logging, progress tracking, and gym network leaderboards/feeds. 
+> *Future AI Copilot features are deferred, but the architecture is designed to support them without rewrites.*
 
 ---
 
-## 2. High-Level Architecture
+## 1. Architectural Philosophy
+
+HeliX is built on a **Strict 4-Layer Architecture** housed within a **Turborepo Monorepo**. 
+
+This guarantees that the "brain" of the app (the Core Decision Engine) is 100% decoupled from the UI, allowing us to easily build a React Native mobile app or attach AI agents later.
+
+### MVP System Landscape
 
 ```mermaid
 graph TD
-    subgraph Client["Next.js Client (helix-client)"]
-        UI["UI Layer<br/>React + shadcn/ui"]
-        Hooks["Custom Hooks Layer<br/>Data fetching, caching, mutations"]
-        Store["Client State<br/>Zustand / React Context"]
-        API["API Client<br/>Supabase JS SDK"]
+    classDef ui fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    classDef api fill:#10b981,stroke:#047857,color:#fff
+    classDef engine fill:#8b5cf6,stroke:#6d28d9,color:#fff
+    classDef data fill:#f59e0b,stroke:#b45309,color:#fff
+    classDef db fill:#64748b,stroke:#334155,color:#fff
+
+    subgraph Client ["1. Frontend Layer (Next.js)"]
+        UI["React UI (shadcn/ui)"]:::ui
+        Store["Zustand (Active Workout)"]:::ui
+        AuthCL["Supabase Auth Client"]:::ui
     end
 
-    subgraph Supabase["Supabase (Backend)"]
-        Auth["Auth Service<br/>Email + OAuth"]
-        PG["PostgreSQL<br/>Structured Data"]
-        RLS["Row Level Security<br/>Per-user isolation"]
-        Edge["Edge Functions<br/>Business Logic"]
-        RT["Realtime<br/>Live subscriptions"]
+    subgraph Backend ["2. API Layer (Next.js Edge)"]
+        Routes["API Routes (/api/*)"]:::api
+        Zod["Zod Validation"]:::api
     end
 
-    subgraph Future["Phase 3-4 (AI Layer)"]
-        AI["AI Service<br/>Workout Generation"]
-        Agents["Multi-Agent System<br/>Coaching Engine"]
+    subgraph Engine ["3. Core Decision Engine (Pure TS)"]
+        WE["Workout Engine<br/>(PR Detection)"]:::engine
+        GE["Gym Engine<br/>(Leaderboards & Feed)"]:::engine
+        PE["Progress Engine<br/>(Improvement Scoring)"]:::engine
     end
 
-    UI --> Hooks
-    Hooks --> Store
-    Hooks --> API
-    API --> Auth
-    API --> PG
-    PG --> RLS
-    Edge --> PG
-    Edge -.-> AI
-    AI -.-> Agents
+    subgraph DAL ["4. Data Access Layer"]
+        Repo["Repository Interfaces"]:::data
+        SBC["Supabase Server Client"]:::data
+    end
+
+    DB[("Supabase PostgreSQL")]:::db
+
+    Client -->|HTTP/REST| Backend
+    Backend --> Engine
+    Engine --> DAL
+    DAL --> DB
+
+    %% Rules
+    linkStyle 0 stroke:#10b981,stroke-width:2px;
+    linkStyle 1 stroke:#8b5cf6,stroke-width:2px;
+    linkStyle 2 stroke:#f59e0b,stroke-width:2px;
 ```
+
+**The Golden Rule:** The Frontend *never* talks to the database. It only calls `/api/*`. The API *never* writes business logic. It only calls the Engine.
 
 ---
 
-## 3. Database Schema (Supabase PostgreSQL)
+## 2. Monorepo Structure (Turborepo)
 
-> [!IMPORTANT]
-> This expands on the schema outlined in the README to support all v1 features plus a clean path to AI features in later phases.
+To enforce this layer separation physically, HeliX is structured as a monorepo.
+
+```mermaid
+graph LR
+    subgraph Repo ["turborepo (package.json)"]
+        subgraph Apps ["apps/"]
+            Web["web<br/>(Next.js App)"]
+        end
+        
+        subgraph Packages ["packages/"]
+            Eng["@helix/engine<br/>(Core Logic)"]
+            DB["@helix/database<br/>(Supabase DAL)"]
+            UI["@helix/ui<br/>(Shared React Config)"]
+        end
+    end
+
+    Web -.->|Imports| Eng
+    Eng -.->|Imports| DB
+    Web -.->|Imports| UI
+```
+
+**Why Monorepo?**
+When we build the iOS/Android app (e.g., `apps/mobile`), we simply run `import { WorkoutEngine } from '@helix/engine'` and instantly share 100% of the business logic.
+
+---
+
+## 3. Database Schema
+
+The MVP requires two core domains: **Workout Tracking** and the **Gym Ecosystem**.
 
 ```mermaid
 erDiagram
     users ||--o{ workouts : logs
-    users ||--o{ body_weight_logs : tracks
-    users ||--o{ user_exercise_settings : customizes
-    exercises ||--o{ workout_sets : "performed in"
-    exercises ||--o{ user_exercise_settings : "configured by"
-    workouts ||--o{ workout_sets : contains
-    workout_sets ||--o{ personal_records : triggers
+    users ||--o{ gym_members : joins
+    users ||--o{ progress_events : achieves
 
+    gyms ||--o{ gym_members : has
+    gyms ||--o{ activity_events : broadcasts
+
+    workouts ||--o{ workout_sets : contains
+    exercises ||--o{ workout_sets : used_in
+    workout_sets ||--o{ personal_records : sets
+    personal_records ||--o{ progress_events : creates
+
+    %% Core Workout
     users {
         uuid id PK
-        text email
         text display_name
-        text avatar_url
-        text goal
-        text experience_level
-        text height
-        timestamptz created_at
     }
-
     exercises {
         uuid id PK
         text name
-        text muscle_group
-        text category
-        boolean is_custom
-        uuid created_by FK
-        timestamptz created_at
     }
-
     workouts {
         uuid id PK
         uuid user_id FK
-        text title
-        int duration_seconds
-        text notes
-        timestamptz started_at
-        timestamptz completed_at
+        timestamp completed_at
     }
-
     workout_sets {
         uuid id PK
         uuid workout_id FK
-        uuid exercise_id FK
-        int set_number
         float weight
         int reps
-        int rpe
-        boolean completed
-        timestamptz created_at
     }
-
     personal_records {
         uuid id PK
         uuid user_id FK
-        uuid exercise_id FK
         float weight
-        int reps
-        text record_type
-        timestamptz achieved_at
     }
 
-    body_weight_logs {
+    %% Gym Ecosystem
+    gyms {
         uuid id PK
-        uuid user_id FK
-        float weight
-        date logged_on
+        text name
     }
-
-    user_exercise_settings {
+    gym_members {
+        uuid id PK
+        uuid gym_id FK
+        uuid user_id FK
+    }
+    progress_events {
         uuid id PK
         uuid user_id FK
-        uuid exercise_id FK
-        float default_weight
-        int default_reps
-        int default_sets
+        uuid gym_id FK
+        float progress_score
+    }
+    activity_events {
+        uuid id PK
+        uuid gym_id FK
+        jsonb payload
     }
 ```
-
-### Key Design Decisions
-
-- **`personal_records`** is a separate table (not a computed view) for fast dashboard queries and historical tracking.
-- **`user_exercise_settings`** stores per-user defaults so the workout logger can pre-fill weight/reps from the last session.
-- **`workout_sets.rpe`** (Rate of Perceived Exertion) is included early — it's critical data for the future AI fatigue model.
-- **`exercises.is_custom`** + `created_by` allows users to add custom exercises while keeping a global exercise library.
 
 ---
 
-## 4. Frontend Architecture
+## 4. MVP Feature: The Gym Ecosystem
 
-### Recommended Layer Structure
+Instead of competing on absolute strength (which biases advanced lifters), **HeliX leaderboards are based on the rate of personal improvement.**
 
-```
-helix-client/
-├── app/                          # Next.js App Router (pages)
-│   ├── (auth)/                   # Auth group route
-│   │   ├── login/page.tsx
-│   │   └── signup/page.tsx
-│   ├── (app)/                    # Authenticated app shell
-│   │   ├── layout.tsx            # Bottom nav + auth guard
-│   │   ├── page.tsx              # Dashboard
-│   │   ├── workout/page.tsx
-│   │   ├── progress/page.tsx
-│   │   └── profile/page.tsx
-│   └── layout.tsx                # Root layout (theme, fonts)
-│
-├── components/
-│   ├── ui/                       # shadcn primitives (no changes)
-│   ├── dashboard/
-│   ├── workout/
-│   ├── progress/
-│   ├── profile/
-│   └── layout/
-│
-├── lib/
-│   ├── supabase/
-│   │   ├── client.ts             # Browser Supabase client
-│   │   ├── server.ts             # Server-side Supabase client
-│   │   └── middleware.ts         # Auth session refresh
-│   ├── types/
-│   │   └── database.ts           # Auto-generated Supabase types
-│   └── utils.ts
-│
-├── hooks/
-│   ├── use-auth.ts               # Auth state + methods
-│   ├── use-workouts.ts           # Workout CRUD + caching
-│   ├── use-exercises.ts          # Exercise list + search
-│   ├── use-progress.ts           # Progress data fetching
-│   └── use-profile.ts            # Profile CRUD
-│
-├── stores/
-│   └── workout-session.ts        # Zustand store for active workout
-│
-└── middleware.ts                  # Next.js middleware (auth redirect)
-```
+### Progress Detection Flow
 
-### State Management Strategy
-
-| State Type | Solution | Rationale |
-|-----------|----------|-----------|
-| **Server state** (workouts, exercises, PRs) | React Query or SWR via Supabase hooks | Automatic caching, revalidation, optimistic updates |
-| **Active workout session** | Zustand store + `localStorage` backup | Fast in-memory updates during a workout; survives page refresh |
-| **Auth state** | Supabase Auth + React Context | Built-in session management |
-| **UI state** (modals, tabs) | Local component `useState` | No persistence needed |
-
-> [!TIP]
-> Using a Zustand store for the **active workout session** is critical. The current `useState` + `localStorage` approach works, but a dedicated store enables undo/redo, mid-workout recovery, and eventually syncing partial workouts to the server.
-
----
-
-## 5. Authentication Flow
+When a user finishes a workout, the `Core Decision Engine` runs the following logic:
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant C as Client (Next.js)
-    participant M as Middleware
-    participant S as Supabase Auth
+    participant API as /api/workouts/finish
+    participant Eng as WorkoutEngine
+    participant DB as Supabase DB
 
-    U->>C: Opens app
-    M->>S: Check session cookie
-    alt No session
-        M->>C: Redirect to /login
-        U->>C: Enters email + password
-        C->>S: signInWithPassword()
-        S-->>C: JWT + refresh token
-        C->>M: Set session cookie
-        M->>C: Redirect to /dashboard
-    else Valid session
-        M->>C: Allow route access
+    API->>Eng: processWorkout(sets)
+    Eng->>DB: Fetch previous PRs
+    
+    loop For each set
+        alt new_weight > previous_pr
+            Eng->>Eng: Calculate Improvement %
+            Eng->>DB: Insert new personal_record
+            Eng->>DB: Insert progress_event
+            Eng->>DB: Insert activity_event (Feed)
+        end
     end
+    
+    Eng-->>API: Return Results
 ```
 
-**Supported providers (recommended):**
-- Email + Password (for launch)
-- Google OAuth (high-value for gym users who already have Google accounts)
+### The Leaderboard (Pure SQL)
 
----
+Leaderboards are calculated entirely in Postgres. No heavy backend loops.
 
-## 6. Key Data Flows
-
-### Workout Logging Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant Z as Zustand Store
-    participant LS as localStorage
-    participant SB as Supabase
-
-    U->>Z: Tap "Start Workout"
-    Z->>LS: Persist session backup
-    loop Each Set
-        U->>Z: Log set (weight, reps)
-        Z->>LS: Update backup
-    end
-    U->>Z: Tap "Finish Workout"
-    Z->>SB: INSERT workout + sets
-    SB-->>Z: Confirm + return IDs
-    Z->>SB: Check for new PRs
-    alt New PR detected
-        SB->>SB: INSERT personal_record
-        Z-->>U: Show PR celebration 🎉
-    end
-    Z->>LS: Clear session backup
-```
-
-> [!NOTE]
-> The `localStorage` backup ensures that if the user loses connection mid-workout or closes the app, the session can be recovered. This is one of the most important UX features for a gym app.
-
-### Progress Data Query
+**Scoring formula:** `progress_score = (new_pr - old_pr) / old_pr`
 
 ```sql
--- Strength progression for a given exercise (used by ProgressTracker)
-SELECT
-  date_trunc('week', ws.created_at) AS week,
-  MAX(ws.weight) AS max_weight,
-  SUM(ws.weight * ws.reps) AS total_volume
-FROM workout_sets ws
-JOIN workouts w ON ws.workout_id = w.id
-WHERE w.user_id = :user_id
-  AND ws.exercise_id = :exercise_id
-GROUP BY week
-ORDER BY week;
-```
-
-This replaces the current hardcoded `mockData` in `progress-tracker.tsx`.
-
----
-
-## 7. Security — Row Level Security (RLS)
-
-Every table must have RLS policies so users can only access their own data:
-
-```sql
--- Example: workouts table
-ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can manage own workouts"
-ON workouts FOR ALL
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
-```
-
-This pattern repeats for `workout_sets`, `personal_records`, `body_weight_logs`, and `user_exercise_settings`.
-
-The `exercises` table has a different policy: everyone can **read** global exercises, but only the creator can modify custom ones.
-
----
-
-## 8. API Design (Supabase Client)
-
-No custom REST API is needed for v1. The Supabase JS SDK provides typed, direct database access with RLS enforcement. Example patterns:
-
-```typescript
-// lib/supabase/queries.ts
-
-// Fetch user's workouts with sets
-const { data } = await supabase
-  .from('workouts')
-  .select(`*, workout_sets(*, exercises(*))`)
-  .eq('user_id', userId)
-  .order('started_at', { ascending: false })
-  .limit(20);
-
-// Log a completed workout (transaction-like)
-const { data: workout } = await supabase
-  .from('workouts')
-  .insert({ user_id: userId, started_at, completed_at })
-  .select()
-  .single();
-
-await supabase
-  .from('workout_sets')
-  .insert(sets.map(s => ({ ...s, workout_id: workout.id })));
+-- Monthly Gym Leaderboard
+SELECT 
+    users.display_name,
+    SUM(progress_events.progress_score) as total_score
+FROM progress_events
+JOIN users ON users.id = progress_events.user_id
+WHERE gym_id = :gym_id 
+  AND created_at >= date_trunc('month', now())
+GROUP BY users.id
+ORDER BY total_score DESC
+LIMIT 50;
 ```
 
 ---
 
-## 9. Phased Roadmap with Architecture Milestones
+## 5. Architectural Improvements Included in MVP
 
-```mermaid
-gantt
-    title HeliX Development Phases
-    dateFormat  YYYY-MM
-    axisFormat  %b %Y
+To ensure the MVP is immediately production-ready, we incorporate the following patterns from day one.
 
-    section Phase 1 — Core Tracker
-    Supabase setup + auth          :p1a, 2026-03, 2w
-    Schema migration               :p1b, after p1a, 1w
-    Replace localStorage with DB   :p1c, after p1b, 2w
-    Offline-first + sync           :p1d, after p1c, 1w
+### A. Local-First Caching for Workouts
+Gym basements have terrible internet. The active workout lives in a **Zustand store** backed by `localStorage` (or IndexedDB). 
+- If the user taps "Finish Workout" and the network fails, the payload is saved to an `offline_queue`.
+- When the device regains connection, the frontend flushes the queue to the `/api/workouts/finish` endpoint.
 
-    section Phase 2 — Analytics
-    Real progress charts           :p2a, after p1d, 2w
-    PR tracking + notifications    :p2b, after p2a, 1w
-    Volume + frequency analytics   :p2c, after p2b, 2w
+### B. Event Sourcing for Activity Feed
+Instead of just logging string messages to the feed, the `activity_events` table stores **immutable facts** as JSON.
 
-    section Phase 3 — AI Foundation
-    Edge Functions setup           :p3a, after p2c, 1w
-    AI workout generation API      :p3b, after p3a, 3w
-    Smart defaults + autoload      :p3c, after p3b, 2w
-
-    section Phase 4 — AI Copilot
-    Fatigue model + readiness      :p4a, after p3c, 4w
-    Multi-agent coaching engine    :p4b, after p4a, 4w
+```json
+// Example row in activity_events
+{
+  "type": "PR_BROKEN",
+  "user": "Rahul",
+  "exercise": "Deadlift",
+  "old_pr": 120,
+  "new_pr": 130,
+  "unit": "kg"
+}
 ```
+The Frontend parses this JSON to render the UI. If we want to change how feeds look later, or translate them into another language, we just change the UI renderer—the raw data remains pure.
+
+### C. Edge Runtimes
+The Next.js API Routes (`/api/*`) are configured to run on the **Edge Runtime**. Because the Core Decision Engine is pure TypeScript and Supabase uses standard `fetch`, our backend runs geographically close to the user with 0ms cold starts.
 
 ---
 
-## 10. Phase 3–4: AI Architecture (Future)
+## 6. Implementation Roadmap
 
-When the time comes, the AI layer should be built as **Supabase Edge Functions** calling external AI services, keeping the architecture clean:
+Because the scope is strictly MVP, the roadmap is simplified into 3 distinct milestones.
 
-```mermaid
-graph LR
-    subgraph Client
-        A["Workout Logger"]
-        B["AI Suggestions Panel"]
-    end
+### Milestone 1: Foundation & Monorepo
+1. Convert the current Next.js folder into a Turborepo.
+2. Setup `packages/engine` and `packages/database`.
+3. Implement Supabase Auth (Email + Password).
+4. Build the 4-layer architecture for the existing Workout Logger.
 
-    subgraph Edge["Supabase Edge Functions"]
-        C["generate-workout"]
-        D["analyze-fatigue"]
-        E["coaching-agent"]
-    end
+### Milestone 2: Core Workout Tracking
+1. Create `workouts`, `workout_sets`, and `personal_records` tables.
+2. Build the `WorkoutEngine` to handle saving sets and detecting PRs.
+3. Update the Frontend to use Zustand for offline-resilient active workouts.
 
-    subgraph AI["AI Services"]
-        F["LLM API<br/>(GPT / Gemini)"]
-        G["Custom ML Model<br/>(Fatigue Prediction)"]
-    end
-
-    A -->|workout data| C
-    C -->|prompt + context| F
-    F -->|workout plan| C
-    C -->|response| B
-
-    A -->|training history| D
-    D -->|features| G
-    G -->|readiness score| D
-    D -->|score| A
-
-    E -->|orchestrates| C
-    E -->|orchestrates| D
-```
-
-> [!IMPORTANT]
-> The key insight is: **all AI features depend on clean, structured training data.** Phase 1–2 is about capturing that data correctly. Do not rush to AI.
-
----
-
-## 11. Non-Functional Requirements
-
-| Concern | Target | Approach |
-|---------|--------|----------|
-| **Performance** | < 200ms page load on 4G | Next.js SSR/SSG, Supabase edge |
-| **Offline** | Log workouts without internet | Zustand + localStorage, sync on reconnect |
-| **Mobile UX** | One-handed set logging | Large touch targets, bottom nav, minimal typing |
-| **Data safety** | Zero data loss mid-workout | localStorage backup, optimistic writes |
-| **Scalability** | 10K+ users, 100K+ workouts | Supabase handles infra; indexed queries |
-| **PWA** | Installable on home screen | Next.js PWA plugin, service worker |
-
----
-
-## 12. Summary of What to Build Next
-
-The highest-impact next steps, in order:
-
-1. **Set up Supabase** — project, auth, database schema with RLS
-2. **Create `lib/supabase/`** — client/server helpers, auto-generated types
-3. **Build auth flow** — login, signup, middleware, session management
-4. **Create data hooks** — `use-workouts.ts`, `use-exercises.ts`, `use-progress.ts`, `use-profile.ts`
-5. **Replace `localStorage`** calls in all 4 components with Supabase queries
-6. **Add Zustand** store for the active workout session with `localStorage` backup for offline
-7. **Deploy** to Vercel (frontend) + Supabase (backend)
-
-> [!TIP]
-> The Supabase CLI can auto-generate TypeScript types from your database schema (`supabase gen types typescript`), which gives you end-to-end type safety from DB to UI with zero manual effort.
+### Milestone 3: The Gym Ecosystem
+1. Create `gyms`, `gym_members`, `progress_events`, and `activity_events` tables.
+2. Build the "Join Gym" UI.
+3. Hook PR detection into the `progress_events` table to assign improvement scores.
+4. Build the Gym Leaderboard UI powered by the SQL aggregation query.
+5. Build the real-time Gym Feed UI.

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HeliX Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#007bff",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1923",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<div class="flex-1 flex flex-col max-w-md mx-auto w-full bg-background-light dark:bg-background-dark overflow-y-auto custom-scrollbar pb-24">
+<header class="flex items-center justify-between p-5 mt-2">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">settings</span>
+<h1 class="text-lg font-bold tracking-tight">Profile</h1>
+<button class="flex items-center justify-center size-10 rounded-full bg-slate-200 dark:bg-slate-800">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</header>
+<section class="px-5 mb-8">
+<div class="flex flex-col items-center gap-4 py-6 bg-slate-100/50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="relative">
+<div class="size-24 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="Professional portrait of a male athlete" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDC_tQV63FKqo4SQkLa_HJJmdZuLoiQT2RxFEEa7-iwx8BfPvrhM5IzmX6of9BecgJZrY0mB2IKzt1Ly-whEXg7oJ2owx4oo2ctxTDkSu2df3Tl8WjilyPbRQ1Ru84Q2RArPb99uQrj97ohZaClJP3UtjqB381E6ZL21P7KKRnFa-QQgTcN8tT8O9ah3uFRBLDksFLwI4s4NkUBT1JOzRY6s6T_h7xYuZeZbxW4Qgz67qBCPPLNQO5qL4mDdDNHH8mMw1lS43JJO2E"/>
+</div>
+<div class="absolute bottom-0 right-0 size-6 bg-primary rounded-full border-2 border-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px] text-white">verified</span>
+</div>
+</div>
+<div class="text-center">
+<h2 class="text-2xl font-bold">Rahul</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm">rahul@helix.ai</p>
+</div>
+</div>
+</section>
+<section class="px-5 mb-8">
+<h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-4 px-1">Training Goals</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-full text-sm font-medium">Building Muscle</span>
+<span class="px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-full text-sm font-medium">Getting Stronger</span>
+<button class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full flex items-center">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</section>
+<section class="px-5 mb-8">
+<div class="p-5 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="text-xs font-medium text-slate-500 uppercase tracking-tighter">Current Weight</p>
+<div class="flex items-baseline gap-1">
+<h4 class="text-3xl font-bold tracking-tighter">82.4</h4>
+<span class="text-lg font-medium text-slate-400">kg</span>
+</div>
+<p class="text-[10px] text-primary mt-1 flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-xs">history</span> Last tracked 2 days ago
+                        </p>
+</div>
+<div class="w-24 h-12 flex items-end gap-1">
+<div class="w-full bg-primary/20 h-4 rounded-sm"></div>
+<div class="w-full bg-primary/20 h-6 rounded-sm"></div>
+<div class="w-full bg-primary/40 h-8 rounded-sm"></div>
+<div class="w-full bg-primary/60 h-5 rounded-sm"></div>
+<div class="w-full bg-primary h-10 rounded-sm"></div>
+</div>
+</div>
+<button class="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg">scale</span>
+                    Log Weight
+                </button>
+</div>
+</section>
+<section class="px-5 mb-4">
+<h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-2 px-1">Account Settings</h3>
+<div class="flex flex-col">
+<a class="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800 group" href="#">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">calendar_month</span>
+</div>
+<span class="font-medium">Exercise History</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:translate-x-1 transition-transform">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800 group" href="#">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">notifications</span>
+</div>
+<span class="font-medium">Notifications</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:translate-x-1 transition-transform">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800 group" href="#">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">lock</span>
+</div>
+<span class="font-medium">Privacy</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:translate-x-1 transition-transform">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800 group" href="#">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">card_membership</span>
+</div>
+<span class="font-medium">Subscription</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-bold">PRO</span>
+<span class="material-symbols-outlined text-slate-400 group-hover:translate-x-1 transition-transform">chevron_right</span>
+</div>
+</a>
+<a class="flex items-center justify-between py-4 group" href="#">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-lg bg-red-500/10 dark:bg-red-500/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-red-500 text-xl">logout</span>
+</div>
+<span class="font-medium text-red-500">Log Out</span>
+</div>
+</a>
+</div>
+</section>
+</div>
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md h-[72px] bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-6 pb-2 z-50">
+<a class="flex flex-col items-center gap-1 text-slate-400 transition-colors" href="#">
+<span class="material-symbols-outlined text-[26px]">fitness_center</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Workout</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 transition-colors" href="#">
+<span class="material-symbols-outlined text-[26px]">explore</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Explore</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 transition-colors" href="#">
+<span class="material-symbols-outlined text-[26px]">bar_chart</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Profile</span>
+</a>
+</nav>
+</body></html>
